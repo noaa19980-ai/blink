@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Blink - היכרויות בסביבה</title>
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body {
+            margin: 0; background: #090d16; color: #f8fafc;
+            display: flex; justify-content: center; min-height: 100vh;
+        }
+        .phone-container {
+            width: 100%; max-width: 430px; background: #111827;
+            min-height: 100vh; padding: 20px 18px; display: flex; flex-direction: column;
+            position: relative;
+        }
+        header { text-align: center; margin-bottom: 16px; }
+        header h1 {
+            margin: 0; font-size: 32px; letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #ec4899, #f59e0b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header p { margin: 4px 0 0; color: #9ca3af; font-size: 14px; }
+
+        .auth-box {
+            background: #1f2937; border-radius: 24px; padding: 22px;
+            border: 1px solid #374151;
+        }
+        .tabs { display: flex; gap: 8px; margin-bottom: 18px; background: #111827; padding: 5px; border-radius: 14px; }
+        .tab {
+            flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent;
+            color: #9ca3af; font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        .tab.active { background: #ec4899; color: white; }
+
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 13px; color: #d1d5db; margin-bottom: 5px; }
+        .input-group input, .input-group select {
+            width: 100%; height: 42px; padding: 0 12px; border-radius: 12px; border: 1px solid #374151;
+            background: #111827; color: white; font-size: 15px; outline: none;
+        }
+        .input-group input[type="file"] { padding: 8px 10px; height: auto; font-size: 13px; }
+        .input-group input:focus { border-color: #ec4899; }
+        .row { display: flex; gap: 10px; align-items: flex-end; }
+        .row .input-group { flex: 1; }
+
+        .primary-btn {
+            width: 100%; padding: 14px; border: none; border-radius: 14px;
+            background: linear-gradient(135deg, #ec4899, #f59e0b);
+            color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px;
+        }
+        .error-msg { color: #f87171; font-size: 13px; text-align: center; margin-top: 10px; }
+
+        .user-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #1f2937; padding: 10px 14px; border-radius: 16px; margin-bottom: 14px;
+            border: 1px solid #374151;
+        }
+        .user-bar-info { display: flex; align-items: center; gap: 10px; }
+        .user-bar img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; }
+        .logout-btn { background: transparent; border: 1px solid #4b5563; color: #9ca3af; padding: 6px 10px; border-radius: 10px; font-size: 12px; cursor: pointer; }
+
+        /* התראת Blink נכנסת */
+        .incoming-alert {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(245, 158, 11, 0.2));
+            border: 1px solid #ec4899;
+            border-radius: 20px;
+            padding: 14px;
+            margin-bottom: 14px;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .incoming-header {
+            font-size: 13px; font-weight: bold; color: #f472b6; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .incoming-body { display: flex; align-items: center; gap: 12px; }
+        .incoming-body img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #f59e0b; }
+        .incoming-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .accept-btn {
+            flex: 2; padding: 10px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, #ec4899, #f59e0b);
+            color: white; font-weight: bold; font-size: 14px; cursor: pointer;
+        }
+        .decline-btn {
+            flex: 1; padding: 10px; border: 1px solid #4b5563; border-radius: 12px;
+            background: #1f2937; color: #9ca3af; font-size: 13px; cursor: pointer;
+        }
+
+        /* סרגל ניווט בין רדאר לצ'אטים */
+        .nav-pills {
+            display: flex; gap: 8px; margin-bottom: 16px; background: #1f2937;
+            padding: 5px; border-radius: 14px; border: 1px solid #374151;
+        }
+        .nav-pill {
+            flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent;
+            color: #9ca3af; font-weight: bold; font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .nav-pill.active { background: #ec4899; color: white; }
+        .badge {
+            background: #f59e0b; color: #111827; font-size: 11px; font-weight: bold;
+            padding: 2px 7px; border-radius: 999px;
+        }
+
+        .radar-box {
+            background: #1f2937; border-radius: 26px; padding: 22px;
+            text-align: center; margin-bottom: 18px; border: 1px solid #374151;
+            transition: all 0.3s ease;
+        }
+        .radar-box.active { border-color: #ec4899; box-shadow: 0 0 28px rgba(236, 72, 153, 0.25); }
+        .toggle-btn {
+            width: 124px; height: 124px; border-radius: 50%; border: none;
+            background: #374151; color: white; font-size: 15px; font-weight: bold;
+            cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 6px; padding: 10px; line-height: 1.25;
+        }
+        .radar-box.active .toggle-btn {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.6); }
+            70% { box-shadow: 0 0 0 22px rgba(236, 72, 153, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+        }
+        .status-text { margin-top: 12px; font-size: 14px; color: #e5e7eb; }
+
+        .section-title { font-size: 14px; color: #9ca3af; margin-bottom: 12px; }
+        .card {
+            background: #1f2937; border-radius: 20px; padding: 14px;
+            display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+            border: 1px solid #374151;
+        }
+        .card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; }
+        .card-info { flex: 1; min-width: 0; }
+        .card-name { font-weight: bold; font-size: 16px; }
+        .card-dist { font-size: 12px; color: #38bdf8; margin-top: 2px; }
+        .card-bio { font-size: 13px; color: #d1d5db; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .blink-btn {
+            background: linear-gradient(135deg, #ec4899, #f59e0b);
+            color: white; border: none; border-radius: 14px;
+            padding: 10px 14px; font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap;
+        }
+        .blink-btn.sent { background: #374151; color: #9ca3af; cursor: default; }
+        .blink-btn.matched { background: #10b981; color: white; }
+
+        /* חלון צ'אט בזמן אמת */
+        .chat-box {
+            display: flex; flex-direction: column; height: 62vh;
+            background: #1f2937; border-radius: 22px; border: 1px solid #374151; overflow: hidden;
+        }
+        .chat-header {
+            display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+            background: #111827; border-bottom: 1px solid #374151;
+        }
+        .chat-header img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #10b981; }
+        .back-btn {
+            background: transparent; border: 1px solid #4b5563; color: #e5e7eb;
+            border-radius: 10px; padding: 5px 10px; cursor: pointer; font-size: 13px;
+        }
+        .chat-messages {
+            flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+        }
+        .msg-bubble {
+            max-width: 78%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .msg-me {
+            align-self: flex-start;
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: white; border-bottom-right-radius: 4px;
+        }
+        .msg-them {
+            align-self: flex-end;
+            background: #374151; color: #f8fafc; border-bottom-left-radius: 4px;
+        }
+        .chat-input-row {
+            display: flex; gap: 8px; padding: 10px; background: #111827; border-top: 1px solid #374151;
+        }
+        .chat-input-row input {
+            flex: 1; height: 40px; border-radius: 12px; border: 1px solid #374151;
+            background: #1f2937; color: white; padding: 0 12px; font-size: 14px; outline: none;
+        }
+        .chat-send-btn {
+            background: linear-gradient(135deg, #ec4899, #f59e0b); color: white; border: none;
+            border-radius: 12px; padding: 0 16px; font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+
+        /* הודעת Match חגיגית */
+        .match-toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981, #059669); color: white;
+            padding: 12px 20px; border-radius: 999px; font-weight: bold; font-size: 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 999;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div id="matchToast" class="match-toast hidden"></div>
+
+<div class="phone-container">
+    <header>
+        <h1>Blink ✨</h1>
+        <p>לראות מי פתוח להיכרות ממש לידך</p>
+    </header>
+
+    <!-- מסך 1: הרשמה והתחברות -->
+    <div id="authScreen" class="auth-box">
+        <div class="tabs">
+            <button class="tab active" id="tabRegister" onclick="switchTab('register')">הרשמה חדשה</button>
+            <button class="tab" id="tabLogin" onclick="switchTab('login')">כניסה לחשבון</button>
+        </div>
+
+        <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="row">
+                <div class="input-group">
+                    <label>שם משתמש</label>
+                    <input type="text" id="regUser" placeholder="נעה / noa" required>
+                </div>
+                <div class="input-group">
+                    <label>סיסמה</label>
+                    <input type="password" id="regPass" placeholder="••••" required>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>מספר טלפון</label>
+                <input type="tel" id="regPhone" placeholder="050-0000000" required>
+            </div>
+            <div class="row">
+                <div class="input-group">
+                    <label>שם פרטי (שיוצג לכולם)</label>
+                    <input type="text" id="regName" placeholder="נעה" required>
+                </div>
+                <div class="input-group" style="max-width: 90px;">
+                    <label>גיל</label>
+                    <input type="number" id="regAge" min="18" max="99" value="26" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-group">
+                    <label>אני:</label>
+                    <select id="regGender">
+                        <option value="female">אישה</option>
+                        <option value="male">גבר</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>מחפש/ת:</label>
+                    <select id="regPref">
+                        <option value="male">גברים</option>
+                        <option value="female">נשים</option>
+                        <option value="all">הכול</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>משפט קצר עלייך</label>
+                <input type="text" id="regBio" placeholder="אוהבת יין לבן, מוזיקה טובה וים 🥂">
+            </div>
+            <div class="input-group">
+                <label>תמונת פרופיל (כדי שיזהו אותך במקום)</label>
+                <input type="file" id="regAvatar" accept="image/*">
+            </div>
+            <button type="submit" class="primary-btn">יצירת חשבון וכניסה ✨</button>
+        </form>
+
+        <form id="loginForm" class="hidden" onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <label>שם משתמש</label>
+                <input type="text" id="loginUser" required>
+            </div>
+            <div class="input-group">
+                <label>סיסמה</label>
+                <input type="password" id="loginPass" required>
+            </div>
+            <button type="submit" class="primary-btn">התחברות</button>
+        </form>
+
+        <div id="authError" class="error-msg"></div>
+    </div>
+
+    <!-- מסך 2: האפליקציה -->
+    <div id="appScreen" class="hidden">
+        <div class="user-bar">
+            <div class="user-bar-info">
+                <img id="myAvatar" src="" alt="avatar">
+                <div>
+                    <div id="myName" style="font-weight: bold; font-size: 15px;"></div>
+                    <div style="font-size: 12px; color: #9ca3af;">מחובר/ת ל-Blink</div>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">התנתק/י</button>
+        </div>
+
+        <!-- התראות Blink נכנסות -->
+        <div id="incomingContainer"></div>
+
+        <!-- ניווט ראשי: רדאר / התאמות וצ'אט -->
+        <div class="nav-pills">
+            <button class="nav-pill active" id="navRadar" onclick="switchView('radar')">📡 רדאר סביבה</button>
+            <button class="nav-pill" id="navMatches" onclick="switchView('matches')">
+                💬 צ'אטים <span id="matchesBadge" class="badge hidden">0</span>
+            </button>
+        </div>
+
+        <!-- תצוגת רדאר -->
+        <div id="radarView">
+            <div class="radar-box" id="radarBox">
+                <button class="toggle-btn" id="toggleBtn" onclick="toggleVisibility()">
+                    <span style="font-size: 26px;">✨</span>
+                    <span id="btnLabel">הפוך לגלוי/ה</span>
+                </button>
+                <div class="status-text" id="statusText">מצב בלתי נראה כרגע</div>
+            </div>
+
+            <div class="section-title" id="listTitle" style="display:none;">גלויים ברדיוס 150 מטר ממך:</div>
+            <div id="usersList"></div>
+        </div>
+
+        <!-- תצוגת רשימת התאמות מאושרות -->
+        <div id="matchesView" class="hidden">
+            <div class="section-title">צ'אט פתוח רק למי שאישר/ה איתך Blink הדדי:</div>
+            <div id="matchesList"></div>
+        </div>
+
+        <!-- תצוגת חלון צ'אט בזמן אמת -->
+        <div id="chatView" class="hidden">
+            <div class="chat-box">
+                <div class="chat-header">
+                    <button class="back-btn" onclick="closeChat()">חזרה →</button>
+                    <img id="chatPartnerAvatar" src="" alt="">
+                    <div style="flex:1;">
+                        <div id="chatPartnerName" style="font-weight:bold; font-size:15px;"></div>
+                        <div style="font-size:11px; color:#10b981;">Blink הדדי מאושר ✓</div>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <form class="chat-input-row" onsubmit="handleSendMessage(event)">
+                    <input type="text" id="chatInput" placeholder="כתוב/כתבי הודעה..." autocomplete="off">
+                    <button type="submit" class="chat-send-btn">שלח</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentUser = JSON.parse(localStorage.getItem("blink_user") || "null");
+    let isVisible = false;
+    let scanInterval = null;
+    let notifInterval = null;
+    let chatInterval = null;
+    let activeChatPartner = null;
+    let knownMatchIds = new Set();
+
+    if (currentUser) {
+        showApp();
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById("matchToast");
+        toast.innerText = msg;
+        toast.classList.remove("hidden");
+        setTimeout(() => toast.classList.add("hidden"), 3500);
+    }
+
+    function switchTab(tab) {
+        document.getElementById("authError").innerText = "";
+        if (tab === "register") {
+            document.getElementById("tabRegister").classList.add("active");
+            document.getElementById("tabLogin").classList.remove("active");
+            document.getElementById("registerForm").classList.remove("hidden");
+            document.getElementById("loginForm").classList.add("hidden");
+        } else {
+            document.getElementById("tabLogin").classList.add("active");
+            document.getElementById("tabRegister").classList.remove("active");
+            document.getElementById("loginForm").classList.remove("hidden");
+            document.getElementById("registerForm").classList.add("hidden");
+        }
+    }
+
+    function switchView(view) {
+        closeChat(false);
+        document.getElementById("navRadar").classList.toggle("active", view === "radar");
+        document.getElementById("navMatches").classList.toggle("active", view === "matches");
+        document.getElementById("radarView").classList.toggle("hidden", view !== "radar");
+        document.getElementById("matchesView").classList.toggle("hidden", view !== "matches");
+    }
+
+    async function handleRegister(e) {
+        e.preventDefault();
+        document.getElementById("authError").innerText = "";
+        try {
+            const formData = new FormData();
+            formData.append("username", document.getElementById("regUser").value);
+            formData.append("password", document.getElementById("regPass").value);
+            formData.append("phone", document.getElementById("regPhone").value);
+            formData.append("display_name", document.getElementById("regName").value);
+            formData.append("age", document.getElementById("regAge").value);
+            formData.append("gender", document.getElementById("regGender").value);
+            formData.append("interested_in", document.getElementById("regPref").value);
+            formData.append("bio", document.getElementById("regBio").value);
+            const fileInput = document.getElementById("regAvatar");
+            if (fileInput.files[0]) {
+                formData.append("avatar", fileInput.files[0]);
+            }
+
+            const res = await fetch("/api/register", { method: "POST", body: formData });
+            const data = await res.json();
+            if (!res.ok) {
+                const errText = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+                document.getElementById("authError").innerText = errText || "שגיאה בהרשמה";
+                return;
+            }
+            currentUser = data.user;
+            localStorage.setItem("blink_user", JSON.stringify(currentUser));
+            showApp();
+        } catch (err) {
+            document.getElementById("authError").innerText = "שגיאת חיבור לשרת: " + err.message;
+        }
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        document.getElementById("authError").innerText = "";
+        try {
+            const res = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: document.getElementById("loginUser").value,
+                    password: document.getElementById("loginPass").value
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                const errText = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+                document.getElementById("authError").innerText = errText || "שגיאה בהתחברות";
+                return;
+            }
+            currentUser = data.user;
+            localStorage.setItem("blink_user", JSON.stringify(currentUser));
+            showApp();
+        } catch (err) {
+            document.getElementById("authError").innerText = "שגיאת חיבור לשרת: " + err.message;
+        }
+    }
+
+    function showApp() {
+        document.getElementById("authScreen").classList.add("hidden");
+        document.getElementById("appScreen").classList.remove("hidden");
+        document.getElementById("myName").innerText = `${currentUser.display_name}, ${currentUser.age}`;
+        document.getElementById("myAvatar").src = currentUser.avatar_url;
+
+        pollNotifications(true);
+        if (notifInterval) clearInterval(notifInterval);
+        notifInterval = setInterval(() => pollNotifications(false), 3000);
+    }
+
+    function logout() {
+        if (isVisible) toggleVisibility();
+        clearInterval(notifInterval);
+        clearInterval(chatInterval);
+        localStorage.removeItem("blink_user");
+        currentUser = null;
+        knownMatchIds.clear();
+        document.getElementById("appScreen").classList.add("hidden");
+        document.getElementById("authScreen").classList.remove("hidden");
+        switchTab("login");
+    }
+
+    function toggleVisibility() {
+        isVisible = !isVisible;
+        const box = document.getElementById("radarBox");
+        const label = document.getElementById("btnLabel");
+        const status = document.getElementById("statusText");
+
+        if (isVisible) {
+            box.classList.add("active");
+            label.innerText = "גלוי/ה כרגע";
+            status.innerText = "מאתר מיקום...";
+            scanLocation();
+            scanInterval = setInterval(scanLocation, 4000);
+        } else {
+            box.classList.remove("active");
+            label.innerText = "הפוך לגלוי/ה";
+            status.innerText = "מצב בלתי נראה כרגע";
+            document.getElementById("usersList").innerHTML = "";
+            document.getElementById("listTitle").style.display = "none";
+            clearInterval(scanInterval);
+            sendUpdate(0, 0);
+        }
+    }
+
+    function scanLocation() {
+        if (!navigator.geolocation) {
+            sendUpdate(32.0853, 34.7818);
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                document.getElementById("statusText").innerText = "גלוי/ה ברדיוס 150 מטר";
+                sendUpdate(pos.coords.latitude, pos.coords.longitude);
+            },
+            (err) => {
+                document.getElementById("statusText").innerText = "גלוי/ה ברדיוס 150 מטר (מצב בדיקה)";
+                sendUpdate(32.0853, 34.7818);
+            },
+            { enableHighAccuracy: false, timeout: 4000 }
+        );
+    }
+
+    async function sendUpdate(lat, lng) {
+        if (!currentUser) return;
+        const res = await fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                is_visible: isVisible,
+                lat: lat,
+                lng: lng
+            })
+        });
+        const data = await res.json();
+        renderUsers(data.nearby);
+    }
+
+    function renderUsers(users) {
+        const list = document.getElementById("usersList");
+        const title = document.getElementById("listTitle");
+        if (!isVisible) return;
+
+        title.style.display = "block";
+        if (users.length === 0) {
+            list.innerHTML = "<p style='color:#6b7280; text-align:center;'>אין כרגע אנשים מתאימים וגלויים ברדיוס שלך</p>";
+            return;
+        }
+
+        list.innerHTML = users.map(u => {
+            let btnHtml = `<button class="blink-btn" onclick="sendBlink('${u.user_id}')">✨ Blink</button>`;
+            if (u.blink_status === "sent") {
+                btnHtml = `<button class="blink-btn sent" disabled>ממתין לאישור ⏳</button>`;
+            } else if (u.blink_status === "incoming") {
+                btnHtml = `<button class="blink-btn" onclick="sendBlink('${u.user_id}')">אשר/י Blink ✨</button>`;
+            } else if (u.blink_status === "matched") {
+                btnHtml = `<button class="blink-btn matched" onclick="openChat('${u.user_id}', '${u.name.replace(/'/g, "\\'")}', '${u.avatar}')">💬 לצ'אט</button>`;
+            }
+
+            return `
+                <div class="card">
+                    <img src="${u.avatar}" alt="${u.name}">
+                    <div class="card-info">
+                        <div class="card-name">${u.name}, ${u.age}</div>
+                        <div class="card-dist">📍 במרחק ${u.distance} מטר ממך</div>
+                        <div class="card-bio">${u.bio || ""}</div>
+                    </div>
+                    ${btnHtml}
+                </div>
+            `;
+        }).join("");
+    }
+
+    async function sendBlink(targetId) {
+        const res = await fetch("/api/blink", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ from_user: currentUser.id, to_user_id: targetId })
+        });
+        const data = await res.json();
+        if (data.status === "matched") {
+            showToast("יש התאמה הדדית! הצ'אט נפתח ✨");
+        } else {
+            showToast("ה-Blink נשלח! ממתינים לאישור מהצד השני");
+        }
+        scanLocation();
+        pollNotifications(false);
+    }
+
+    async function pollNotifications(isFirstLoad) {
+        if (!currentUser) return;
+        try {
+            const res = await fetch(`/api/notifications/${currentUser.id}`);
+            const data = await res.json();
+
+            renderIncomingAlerts(data.incoming);
+            renderMatchesList(data.matches);
+
+            const badge = document.getElementById("matchesBadge");
+            if (data.matches.length > 0) {
+                badge.innerText = data.matches.length;
+                badge.classList.remove("hidden");
+            } else {
+                badge.classList.add("hidden");
+            }
+
+            data.matches.forEach(m => {
+                if (!knownMatchIds.has(m.user_id)) {
+                    knownMatchIds.add(m.user_id);
+                    if (!isFirstLoad) {
+                        showToast(`✨ ${m.name} אישר/ה את ה-Blink שלך! הצ'אט פתוח`);
+                    }
+                }
+            });
+        } catch (e) {}
+    }
+
+    function renderIncomingAlerts(incoming) {
+        const container = document.getElementById("incomingContainer");
+        if (!incoming || incoming.length === 0) {
+            container.innerHTML = "";
+            return;
+        }
+        container.innerHTML = incoming.map(item => `
+            <div class="incoming-alert">
+                <div class="incoming-header">✨ התראת Blink חדשה — ${item.headline}</div>
+                <div class="incoming-body">
+                    <img src="${item.avatar}" alt="${item.name}">
+                    <div class="card-info">
+                        <div class="card-name">${item.name}, ${item.age}</div>
+                        <div class="card-bio">${item.bio || "רוצה לפתוח איתך שיחה כאן בסביבה"}</div>
+                    </div>
+                </div>
+                <div class="incoming-actions">
+                    <button class="accept-btn" onclick="respondToBlink('${item.blink_id}', true, '${item.from_user_id}', '${item.name.replace(/'/g, "\\'")}', '${item.avatar}')">אישור ופתיחת צ'אט ✨</button>
+                    <button class="decline-btn" onclick="respondToBlink('${item.blink_id}', false)">לא הפעם</button>
+                </div>
+            </div>
+        `).join("");
+    }
+
+    async function respondToBlink(blinkId, accept, partnerId, partnerName, partnerAvatar) {
+        const res = await fetch("/api/blink/respond", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: currentUser.id, blink_id: blinkId, accept: accept })
+        });
+        const data = await res.json();
+        pollNotifications(false);
+        scanLocation();
+        if (data.status === "matched" && partnerId) {
+            showToast(`אישרת! הצ'אט עם ${partnerName} פתוח ✨`);
+            openChat(partnerId, partnerName, partnerAvatar);
+        }
+    }
+
+    function renderMatchesList(matches) {
+        const list = document.getElementById("matchesList");
+        if (!matches || matches.length === 0) {
+            list.innerHTML = "<p style='color:#6b7280; text-align:center; margin-top:24px;'>עדיין אין התאמות מאושרות.<br>שלחי Blink למישהו בסביבה או אשרי התראה נכנסת!</p>";
+            return;
+        }
+        list.innerHTML = matches.map(m => `
+            <div class="card" style="cursor:pointer;" onclick="openChat('${m.user_id}', '${m.name.replace(/'/g, "\\'")}', '${m.avatar}')">
+                <img src="${m.avatar}" alt="${m.name}" style="border-color:#10b981;">
+                <div class="card-info">
+                    <div class="card-name">${m.name}, ${m.age}</div>
+                    <div class="card-bio" style="color:#9ca3af;">${m.last_message}</div>
+                </div>
+                <button class="blink-btn matched">צ'אט 💬</button>
+            </div>
+        `).join("");
+    }
+
+    function openChat(partnerId, partnerName, partnerAvatar) {
+        activeChatPartner = { id: partnerId, name: partnerName, avatar: partnerAvatar };
+        document.getElementById("radarView").classList.add("hidden");
+        document.getElementById("matchesView").classList.add("hidden");
+        document.getElementById("chatView").classList.remove("hidden");
+
+        document.getElementById("chatPartnerName").innerText = partnerName;
+        document.getElementById("chatPartnerAvatar").src = partnerAvatar;
+
+        loadMessages();
+        if (chatInterval) clearInterval(chatInterval);
+        chatInterval = setInterval(loadMessages, 2000);
+    }
+
+    function closeChat(returnToMatches = true) {
+        activeChatPartner = null;
+        if (chatInterval) clearInterval(chatInterval);
+        document.getElementById("chatView").classList.add("hidden");
+        if (returnToMatches) {
+            document.getElementById("navMatches").classList.add("active");
+            document.getElementById("navRadar").classList.remove("active");
+            document.getElementById("matchesView").classList.remove("hidden");
+        }
+    }
+
+    async function loadMessages() {
+        if (!currentUser || !activeChatPartner) return;
+        const res = await fetch(`/api/messages/${currentUser.id}/${activeChatPartner.id}`);
+        if (!res.ok) {
+            closeChat();
+            return;
+        }
+        const data = await res.json();
+        const box = document.getElementById("chatMessages");
+        const wasAtBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 40;
+
+        box.innerHTML = data.messages.map(m => {
+            const cls = m.sender_id === currentUser.id ? "msg-me" : "msg-them";
+            return `<div class="msg-bubble ${cls}">${escapeHtml(m.text)}</div>`;
+        }).join("");
+
+        if (wasAtBottom) {
+            box.scrollTop = box.scrollHeight;
+        }
+    }
+
+    async function handleSendMessage(e) {
+        e.preventDefault();
+        const input = document.getElementById("chatInput");
+        const text = input.value.trim();
+        if (!text || !activeChatPartner) return;
+
+        input.value = "";
+        const res = await fetch("/api/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                sender_id: currentUser.id,
+                receiver_id: activeChatPartner.id,
+                text: text
+            })
+        });
+        if (res.ok) {
+            loadMessages();
+            pollNotifications(false);
+        }
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+</script>
+</body>
+</html>
