@@ -295,6 +295,27 @@ async def update_and_scan(data: ScanRequest):
     return {"nearby": nearby}
 
 
+@app.get("/api/heatmap")
+async def get_heatmap():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT lat, lng FROM users WHERE is_visible = 1 AND lat != 0 AND lng != 0")
+    rows = c.fetchall()
+    conn.close()
+
+    clusters = {}
+    for lat, lng in rows:
+        grid_lat = round(lat, 3)
+        grid_lng = round(lng, 3)
+        key = (grid_lat, grid_lng)
+        clusters[key] = clusters.get(key, 0) + 1
+
+    return [
+        {"lat": k[0], "lng": k[1], "count": v}
+        for k, v in clusters.items()
+    ]
+
+
 @app.post("/api/blink")
 async def send_blink(action: BlinkAction):
     conn = sqlite3.connect(DB_PATH)
@@ -495,5 +516,4 @@ async def send_message(req: SendMessageRequest):
     conn.commit()
     conn.close()
 
-    return {"status": "sent", "id": msg_id, "created_at": now}                                      
-  
+    return {"status": "sent", "id": msg_id, "created_at": now}
